@@ -1,26 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# This program is dedicated to the public domain under the CC0 license.
 
-"""
-Simple Bot to reply to Telegram messages.
-
-First, a few handler functions are defined. Then, those functions are passed to
-the Dispatcher and registered at their respective places.
-Then, the bot is started and runs until we press Ctrl-C on the command line.
-
-Usage:
-Basic Echobot example, repeats messages.
-Press Ctrl-C on the command line or send a signal to the process to stop the
-bot.
-"""
 
 import logging
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import datetime
-print(datetime.datetime.now())
-
+import random
+import math
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -28,44 +15,40 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-ids = [12211916]
-# Define a few command handlers. These usually take the two arguments update and
-# context. Error handlers also receive the raised TelegramError object in error.
-def start(update, context):
-    """Send a message when the command /start is issued."""
-    update.message.reply_text('Hi!')
-
-
-def help_command(update, context):
-    """Send a message when the command /help is issued."""
-    update.message.reply_text('Help!')
-
-
-def echo(update, context):
-    """Echo the user message."""
-    update.message.reply_text(update.message.text)
+def getRandomInt():
+    return str(math.floor(random.random() * (10000 - 5)) + 4)
 
 def ok(bot, update):
     # bot.send_photo(chat_id=update.chat_id, photo=open('C:\Users\quick\Desktop\Untitled.png', 'rb'))
-    bot.send_photo(chat_id=update.message.chat_id, photo=open('C:\\Users\\quick\\Desktop\\download.png', 'rb'))
+    imgUrl = "http://graph.facebook.com/v2.5/" + getRandomInt() + "/picture?height=200&height=200"
+    bot.send_photo(chat_id=update.message.chat_id, photo=imgUrl)
+    logger.info('User {} just got this pic {}'.format(update.effective_user.full_name, imgUrl))
 
 def subscribe(bot, update, job_queue):
-    """Echo the user message."""
-    bot.send_message(chat_id=update.message.chat_id, text='Starting!')
-    # job_queue.run_repeating(callback_alarm, 1, context=update.message.chat_id)
-    t = datetime.time(hour= 0, minute=21)
-    job_queue.run_daily(callback_alarm, datetime.time(hour=0, minute=46), days=(0, 1, 2, 3, 4, 5, 6), context=update.message.chat_id)
-    job_queue.run_daily(callback_alarm, datetime.time(hour=0, minute=48), days=(0, 1, 2, 3, 4, 5, 6), context=update.message.chat_id)
-    job_queue.run_daily(callback_alarm, datetime.time(hour=0, minute=47), days=(0, 1, 2, 3, 4, 5, 6), context=update.message.chat_id)
-    job_queue.run_daily(callback_alarm, datetime.time(hour=0, minute=49), days=(0, 1, 2, 3, 4, 5, 6), context=update.message.chat_id)
+
+    bot.send_message(chat_id=update.message.chat_id, text='Hey {}, subscribe done'.format(update.effective_user.full_name))
+    # to get utc time - minus 3 to the hour
+    # 11 is 8 and so on
+    job_queue.run_daily(callback_alarm1, datetime.time(hour=8, minute=30), days=(0, 1, 2, 3, 4, 5, 6), context=(update.message.chat_id, update.effective_user.full_name))
+    job_queue.run_daily(callback_alarm2, datetime.time(hour=13, minute=0), days=(0, 1, 2, 3, 4, 5, 6), context=(update.message.chat_id, update.effective_user.full_name))
+    logger.info('User {} just subscribed'.format(update.effective_user.full_name))
+
+def callback_alarm1(update, job):
+    update.send_message(chat_id=job.context[0], text='Wolt!')
+    update.send_message(chat_id=job.context[0], text='Will remaind you again in a few hours')
+    logger.info('User {} just got alarm1 msg'.format(job.context[1]))
 
 
-def callback_alarm(update, job):
-    update.send_message(chat_id=job.context, text='Wolt!!')
 
-def stop_timer(bot, update, job_queue):
+def callback_alarm2(update, job):
+    update.send_message(chat_id=job.context[0], text='Wolt!!!')
+    logger.info('User {} just got alarm2 msg'.format(job.context[1]))
+
+
+def unsubscribe(bot, update, job_queue):
     bot.send_message(chat_id=update.message.chat_id,
-                      text='Stoped!')
+                      text='Bey {} ,unsubscribe done!'.format(update.effective_user.full_name))
+    logger.info('User {} just unsubscribed'.format(update.effective_user.full_name))
     job_queue.stop()
 
 
@@ -80,13 +63,13 @@ def main():
     dp = updater.dispatcher
 
     # on different commands - answer in Telegram
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("help", help_command))
+
     dp.add_handler(CommandHandler("sub", subscribe, pass_job_queue=True))
+    dp.add_handler(CommandHandler("unsub", unsubscribe, pass_job_queue=True))
     dp.add_handler(CommandHandler("ok", ok))
 
     # on noncommand i.e message - echo the message on Telegram
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
+    # dp.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
 
     # Start the Bot
     updater.start_polling()
