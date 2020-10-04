@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 def getRandomInt():
     return str(math.floor(random.random() * (10000 - 5)) + 4)
 
-def ok(bot, update):
+def pic(bot, update):
     # bot.send_photo(chat_id=update.chat_id, photo=open('C:\Users\quick\Desktop\Untitled.png', 'rb'))
     imgUrl = "http://graph.facebook.com/v2.5/" + getRandomInt() + "/picture?height=200&height=200"
     bot.send_photo(chat_id=update.message.chat_id, photo=imgUrl)
@@ -66,7 +66,7 @@ def main():
 
     dp.add_handler(CommandHandler("sub", subscribe, pass_job_queue=True))
     dp.add_handler(CommandHandler("unsub", unsubscribe, pass_job_queue=True))
-    dp.add_handler(CommandHandler("ok", ok))
+    dp.add_handler(CommandHandler("pic", pic))
 
     # on noncommand i.e message - echo the message on Telegram
     # dp.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
